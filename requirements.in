@@ -1,0 +1,5 @@
+fastapi
+httpx
+markdown-it-py
+pydantic
+uvicorn

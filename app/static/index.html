@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gene Expression Explorer</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Gene Expression Explorer</h1>
+      <p>Find genes associated with a cancer and explore their recorded median expression.</p>
+    </header>
+
+    <form id="question-form">
+      <label for="question">Ask a question</label>
+      <div class="composer">
+        <input id="question" name="question" required maxlength="1500"
+               placeholder="Which genes are associated with lung cancer?">
+        <button type="submit">Ask</button>
+      </div>
+      <div class="examples" aria-label="Example questions">
+        <button type="button" data-question="How can you help me?">How can you help me?</button>
+        <button type="button" data-question="What are the main genes involved in lung cancer?">Lung cancer genes</button>
+        <button type="button" data-question="What is the median value expression of genes involved in breast cancer?">Breast cancer expression</button>
+        <button type="button" data-question="What is the median value expression of genes involved in esophageal cancer?">Esophageal cancer expression</button>
+      </div>
+    </form>
+
+    <p id="status" role="status"></p>
+    <section id="result" aria-label="Answer" hidden></section>
+  </main>
+</body>
+</html>
