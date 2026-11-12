@@ -18,7 +18,9 @@ NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_lengt
 
 class QueryDecision(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    operation: Literal["help", "list_genes", "median_expressions", "clarify", "unsupported"]
+    operation: Literal[
+        "help", "list_genes", "median_expressions", "clarify", "unsupported"
+    ]
     scope: Literal["one", "multiple", "all", "unspecified"]
     cancers: list[NonEmptyText]
     genes: list[NonEmptyText]
@@ -91,14 +93,22 @@ def ask(question: str, client: httpx.Client) -> dict:
     response.raise_for_status()
     completion = response.json()
     if completion.get("done_reason") == "length":
-        raise AgentError("The model could not finish interpreting the question. Please try rephrasing it.")
+        raise AgentError(
+            "The model could not finish interpreting the question. Please try rephrasing it."
+        )
     try:
         decision = QueryDecision.model_validate_json(completion["message"]["content"])
     except ValidationError as exc:
-        raise AgentError("The model returned an invalid query decision. Please try rephrasing the question.") from exc
+        raise AgentError(
+            "The model returned an invalid query decision. Please try rephrasing the question."
+        ) from exc
 
     cancers = {name.lower() for name in decision.cancers}
-    if decision.operation == "unsupported" or decision.scope in {"multiple", "all"} or len(cancers) > 1:
+    if (
+        decision.operation == "unsupported"
+        or decision.scope in {"multiple", "all"}
+        or len(cancers) > 1
+    ):
         return {
             "answer": (
                 "I can list genes or show recorded median expressions for one cancer at a time. "
@@ -125,7 +135,10 @@ def ask(question: str, client: httpx.Client) -> dict:
     targets = get_targets(cancer)
     tools_used = ["get_targets"]
     if not targets:
-        return {"answer": f"The dataset has no records for {cancer}.", "tools_used": tools_used}
+        return {
+            "answer": f"The dataset has no records for {cancer} cancer.",
+            "tools_used": tools_used,
+        }
     if decision.operation == "list_genes":
         return {
             "answer": f"Genes associated with {cancer} in this dataset.",
@@ -134,7 +147,9 @@ def ask(question: str, client: httpx.Client) -> dict:
         }
 
     requested = list(dict.fromkeys(gene.upper() for gene in decision.genes))
-    available = [gene for gene in requested if gene in targets] if requested else targets
+    available = (
+        [gene for gene in requested if gene in targets] if requested else targets
+    )
     missing = [gene for gene in requested if gene not in targets]
     if not available:
         return {
