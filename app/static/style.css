@@ -1,4 +1,5 @@
 :root {
+  overflow-y: scroll;
   font-family: Inter, system-ui, sans-serif;
   color: #182722;
   background: #eff4f1;
