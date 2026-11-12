@@ -1,6 +1,8 @@
 const form = document.querySelector("#question-form");
 const input = document.querySelector("#question");
 const status = document.querySelector("#status");
+const loading = document.querySelector("#loading");
+const elapsed = document.querySelector("#elapsed");
 const result = document.querySelector("#result");
 const buttons = form.querySelectorAll("button");
 
@@ -58,6 +60,13 @@ form.addEventListener("submit", async (event) => {
   result.replaceChildren();
   result.hidden = true;
   status.textContent = "Waiting for the local model…";
+  const startedAt = performance.now();
+  const secondsSinceStart = () => (performance.now() - startedAt) / 1000;
+  elapsed.textContent = "0 s";
+  loading.hidden = false;
+  const timer = setInterval(() => {
+    elapsed.textContent = `${Math.floor(secondsSinceStart())} s`;
+  }, 1000);
 
   try {
     const response = await fetch("/api/chat", {
@@ -70,12 +79,16 @@ form.addEventListener("submit", async (event) => {
       throw new Error(typeof data.detail === "string" ? data.detail : undefined);
     }
     showAnswer(question, data);
-    status.textContent = data.truncated
+    const elapsedSeconds = secondsSinceStart().toFixed(1);
+    const message = data.truncated
       ? "Partial answer. The local model reached its output limit."
       : "Answer ready.";
+    status.textContent = `${message} (${elapsedSeconds} s)`;
   } catch (error) {
     status.textContent = error.message || "The request could not be completed.";
   } finally {
+    clearInterval(timer);
+    loading.hidden = true;
     buttons.forEach((button) => { button.disabled = false; });
   }
 });

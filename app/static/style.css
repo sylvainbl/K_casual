@@ -61,6 +61,7 @@ button:focus-visible, input:focus-visible, summary:focus-visible {
 .examples button { font-size: 0.85rem; padding: 0.35rem 0.6rem; }
 
 #status { color: #475c53; min-height: 1.5rem; }
+#loading { color: #475c53; font-variant-numeric: tabular-nums; }
 
 h2 { margin-top: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
 
