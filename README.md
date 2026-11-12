@@ -19,50 +19,18 @@ open [http://localhost:8000](http://localhost:8000). Inference runs locally on t
 The app requires no API key. Use Ctrl+C to stop both services. Run
 `docker compose logs ollama` to check download progress or diagnose startup issues.
 
-Try these questions from the assignment:
+Try these assignment questions in **Simple mode**. The expected results are:
 
-- How can you help me?
-- What are the main genes involved in lung cancer?
-- What is the median value expression of genes involved in breast cancer?
-- What is the median value expression of genes involved in esophageal cancer?
+- How can you help me? — A description of what the app can do.
+- What are the main genes involved in lung cancer? — ALK, RET, ROS1, STK11, and KRAS.
+- What is the median value expression of genes involved in breast cancer? —
+  BRCA2 0.032, BRCA1 0.094, TP53 0.233, GATA3 0.602, CDH1 0.561, ESR1 0.716,
+  MAP3K1 0.701, HER2 0.42, PIK3CA 0.449, and AKT1 0.278.
+- What is the median value expression of genes involved in esophageal cancer? — A message that the dataset has no records for it.
 
 Turn on **Advanced mode** to try an analysis such as “Which genes are shared by
 breast and prostate cancers?” or “What is the highest recorded median expression
 for each cancer?” The result includes the executed SQL.
-
-## Test on a 16 GB laptop
-
-The assignment sets a maximum of 16 GB of RAM for the whole laptop. To leave
-room for the operating system and browser, test with about 8 GB allocated to
-Docker Desktop. On macOS, set the memory limit in **Settings → Resources**.
-On Windows 11 with WSL 2, set an 8 GB memory limit in WSL Settings and restart
-WSL and Docker Desktop. See the [Docker Desktop settings](https://docs.docker.com/desktop/settings-and-maintenance/settings/)
-and [WSL configuration](https://learn.microsoft.com/windows/wsl/wsl-config).
-
-To simulate slower CPU inference, start the stack with a two-CPU quota and
-two inference threads for Ollama. On macOS:
-
-```sh
-OLLAMA_CPUS=2 docker compose up --build
-```
-
-In Windows PowerShell:
-
-```powershell
-$env:OLLAMA_CPUS = "2"
-docker compose up --build
-```
-
-Run `docker stats` in a second terminal while trying the four questions above.
-Time the first request after startup and repeat it with the model already loaded.
-Check for a capability explanation, a lung gene list, a breast expression
-table and a no-records response for esophageal cancer.
-
-Compose caps Ollama at 5 GiB and FastAPI at 256 MiB. Ollama keeps one model
-loaded and runs one inference at a time with a 4,096-token context. The app
-allows up to 768 generated tokens and sets a five-minute request timeout by
-default. The `MODEL_MAX_OUTPUT_TOKENS` and `MODEL_TIMEOUT_SECONDS` environment
-variables override those defaults. An incomplete query decision returns an error.
 
 ## Design and trade-offs
 
@@ -76,29 +44,33 @@ Compose runs two services. FastAPI serves the static HTML, CSS and JavaScript an
 handles `POST /api/chat`. Ollama is reachable on the internal Compose network.
 The browser accesses only FastAPI. Each submitted question is independent.
 
-In simple mode, the local model interprets the question in one Ollama call and returns a decision
-with the operation, scope, cancers, and gene symbols. Python validates the decision
-before using the data tools. Comparisons, rankings, calculations, and lookups for
-multiple cancers receive a message explaining the supported scope. For a valid
-expression query, Python looks up the cancer, retrieves the requested medians, and
-reports any requested genes with missing values.
+The app runs Qwen locally through Ollama. This keeps questions on the machine
+and makes setup possible without an API key or a hosted inference service. The
+trade-off is a model download on first launch, plus CPU and memory use on the
+laptop. Response times depend on the machine. The compact local model also has
+less capacity for complex reasoning and SQL generation than a larger model
+available through a hosted API.
 
-Advanced mode is experimental. Ollama generates a SQLite query and a short
-description of the analysis. Python executes one read-only query against the
-expression table and returns the rows directly. One additional Ollama call can
-correct a retryable SQL error. The generated SQL can misinterpret the question,
-so the interface displays it alongside the result.
+Simple mode prioritizes reliability. For one cancer at a time, users can list
+recorded genes or retrieve their stored median expression values. Ollama
+identifies the request, and Python validates it. Python calls `get_targets` to
+list genes and then calls `get_expressions` if medians are requested. The second
+tool takes the cancer too, since the same gene can have different values across
+cancers. Keeping the scope small makes the supported queries easier to verify.
+In one run with the local model, all 24 questions in the
+[simple benchmark](tests/benchmark_simple.json) produced the expected response,
+including requests that needed clarification or were outside the supported scope.
 
-The expression tool takes the cancer as well as the gene list because the same gene
-can have different values across cancers. The app shows the median stored for each
-gene and lists associated genes without ranking them. Esophageal cancer is absent
-from the dataset and yields a no-records response.
-
-Local inference simplifies account setup and keeps questions on the machine. It
-requires a model download and CPU latency varies by computer. The small model can
-misinterpret an ambiguous or complex question. The frontend uses standard browser
-APIs for one form and one result view, which keeps setup free of a separate
-frontend build.
+Advanced mode prioritizes flexibility. Ollama generates SQL, so users can ask
+for comparisons, rankings, and aggregations without a separate tool for each
+analysis. Python runs the query in read-only SQLite and displays the returned
+rows and the SQL. That flexibility comes at the cost of reliability. A query can
+run successfully and still answer a different question, making an incorrect
+result easy to mistake for a correct one. In one run of the
+[advanced benchmark](tests/benchmark_sql.json), 14 of 20 results matched the CSV
+reference. The local model failed to translate all five of the hardest questions
+into SQL that captured the requested analysis. These limitations are why the
+mode is marked experimental.
 
 ## Run the tests
 
@@ -124,10 +96,34 @@ Edit the direct dependencies in `requirements.in`, then regenerate the pinned
 uv pip compile --universal --python-version 3.14 requirements.in -o requirements.txt
 ```
 
-## AI-assisted development
+## AI-assisted development pros and cons
 
-A coding assistant helped scaffold the application, draft the interface and build
-the checks. It speeds up iteration and offers alternatives for review. It can also
-suggest plausible code with incorrect assumptions, especially around package APIs,
-tool schemas or the meaning of a dataset column. The supplied CSV, the automated
-checks and actual Ollama responses provide evidence for reviewing the result.
+To build this project, I used Codex with a ChatGPT Plus subscription alongside
+VS Code.
+
+I think the biggest trap with AI is letting it write all the code without
+discussing the design with it beforehand. You can end up spending too much time
+trying to understand why the code was written that way. Code you didn't think
+through yourself is hard to read, even with AI tools to explain it.
+
+AI also tends to do too much sometimes. That's why it's important to give it a
+clear scope. For this project, I thought a React app was overkill, but ChatGPT
+recommended one. I went with plain HTML, CSS, and JavaScript because the interface
+only needed a form and a results view. ChatGPT also doubted that the app could
+work reliably with a local LLM.
+
+The biggest pro I see in using AI to code is that it can challenge my design. My
+process is always to come up with a design and ask the AI to challenge it, explain
+how it would have done it, and give me the pros and cons of both approaches. I
+generally don't agree with everything, but it rarely fails to bring up something
+I hadn't thought about.
+
+Another pro is saving time on the frontend and unit tests when a project has to
+move fast. I wanted a very simple frontend and to spend as little time as possible
+on it while still understanding it. I wanted unit tests because I can't imagine
+a project without them. With such a short deadline, I used AI to help write them
+so I could spend more time on the most important parts of the code.
+
+For the most important parts of the code, I use AI as a reviewer. Sometimes I ask
+it to write code based on pseudocode I wrote first. I always make sure to review
+the code afterward in VS Code.
