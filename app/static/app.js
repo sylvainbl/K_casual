@@ -1,6 +1,6 @@
 const form = document.querySelector("#question-form");
 const input = document.querySelector("#question");
-const status = document.querySelector("#status");
+const statusMessage = document.querySelector("#status");
 const loading = document.querySelector("#loading");
 const elapsed = document.querySelector("#elapsed");
 const result = document.querySelector("#result");
@@ -98,7 +98,7 @@ advancedToggle.addEventListener("click", () => {
   }
   result.replaceChildren();
   result.hidden = true;
-  status.textContent = "";
+  statusMessage.textContent = "";
 });
 
 form.addEventListener("submit", async (event) => {
@@ -106,7 +106,7 @@ form.addEventListener("submit", async (event) => {
   if (advancedToggle.disabled) return;
   const question = input.value.trim();
   if (!question) {
-    status.textContent = "Enter a question to continue.";
+    statusMessage.textContent = "Enter a question to continue.";
     return;
   }
 
@@ -114,7 +114,7 @@ form.addEventListener("submit", async (event) => {
   buttons.forEach((button) => { button.disabled = true; });
   result.replaceChildren();
   result.hidden = true;
-  status.textContent = "Waiting for the local model…";
+  statusMessage.textContent = "Waiting for the local model…";
   const startedAt = performance.now();
   const secondsSinceStart = () => (performance.now() - startedAt) / 1000;
   elapsed.textContent = "0 s";
@@ -138,9 +138,9 @@ form.addEventListener("submit", async (event) => {
     const message = data.truncated
       ? "Result limit reached."
       : "Answer ready.";
-    status.textContent = `${message} (${elapsedSeconds} s)`;
+    statusMessage.textContent = `${message} (${elapsedSeconds} s)`;
   } catch (error) {
-    status.textContent = error.message || "The request could not be completed.";
+    statusMessage.textContent = error.message || "The request could not be completed.";
   } finally {
     clearInterval(timer);
     loading.hidden = true;
