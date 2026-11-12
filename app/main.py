@@ -9,6 +9,7 @@ from markdown_it import MarkdownIt
 from pydantic import BaseModel, StringConstraints
 from typing import Annotated
 
+from .advanced import ask_advanced
 from .agent import OLLAMA_URL, AgentError, ask
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ class ChatRequest(BaseModel):
     question: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1500)
     ]
+    is_advanced: bool = False
 
 
 @app.get("/", include_in_schema=False)
@@ -34,7 +36,8 @@ def index() -> FileResponse:
 def chat(request: ChatRequest) -> dict:
     try:
         with httpx.Client(base_url=OLLAMA_URL, trust_env=False) as client:
-            result = ask(request.question, client)
+            handler = ask_advanced if request.is_advanced else ask
+            result = handler(request.question, client)
         return {**result, "answer_html": markdown.render(result["answer"])}
     except httpx.TimeoutException as exc:
         raise HTTPException(504, "The local model took too long. Please try again.") from exc

@@ -48,13 +48,22 @@ For action query, return sql as a single SELECT, optionally with non-recursive C
 quotes for text values. Available SQL functions: {", ".join(sorted(ALLOWED_FUNCTIONS))}.
 Respect the requested filters, grouping, and ranking. Include ties when listing
 the genes at a maximum or minimum unless the user asks for a specific tie-break.
-For "highest", "lowest", or "top" per group, aggregate or filter within each
-group. ORDER BY alone only sorts the rows. For example, to find the genes with
-the highest median for each cancer, use:
+For the single highest recorded median, compute the maximum across all rows
+matching the requested filters. For the highest recorded median per cancer,
+compute a separate maximum for each cancer. Include median_value when identifying
+the genes at an extremum. A subquery used with = must return at most one row.
+
+For the genes tied for the highest recorded median across all cancers, use:
+SELECT cancer_indication, gene, median_value FROM expressions
+WHERE median_value = (SELECT MAX(median_value) FROM expressions)
+ORDER BY cancer_indication, gene
+
+For the genes tied for the highest recorded median in each cancer, use:
 SELECT e.cancer_indication, e.gene, e.median_value FROM expressions AS e
 WHERE e.median_value = (SELECT MAX(median_value) FROM expressions
                        WHERE cancer_indication = e.cancer_indication)
 ORDER BY e.cancer_indication, e.gene
+For a top result within each group, rank and filter within that group.
 
 Set analysis_label to a short English description of the analysis you intend to
 run. Name the metric, filters and grouping when relevant. Check that the SQL

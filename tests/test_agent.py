@@ -133,3 +133,36 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("<strong>Example</strong><br />", payload["answer_html"])
         self.assertIn("<li>Item</li>", payload["answer_html"])
         self.assertIn("&lt;b&gt;Raw HTML&lt;/b&gt;", payload["answer_html"])
+
+    async def test_api_keeps_simple_default_and_returns_the_advanced_table_and_sql(self):
+        simple = {"answer": "Lung cancer genes.", "genes": ["RET"], "tools_used": ["get_targets"]}
+        advanced = {
+            "answer": "Find shared genes.",
+            "columns": ["gene"],
+            "rows": [["BRCA2"]],
+            "sql": "SELECT gene FROM expressions",
+            "truncated": False,
+            "tools_used": ["query_expressions"],
+        }
+        with (
+            patch("app.main.ask", return_value=simple) as ask,
+            patch("app.main.ask_advanced", return_value=advanced) as ask_advanced,
+        ):
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                simple_response = await client.post("/api/chat", json={"question": "Lung cancer genes?"})
+                advanced_response = await client.post(
+                    "/api/chat", json={"question": "Which genes are shared?", "is_advanced": True}
+                )
+
+        ask.assert_called_once()
+        self.assertEqual(ask.call_args.args[0], "Lung cancer genes?")
+        ask_advanced.assert_called_once()
+        self.assertEqual(ask_advanced.call_args.args[0], "Which genes are shared?")
+        self.assertEqual(simple_response.status_code, 200)
+        self.assertEqual(simple_response.json()["genes"], ["RET"])
+        self.assertEqual(advanced_response.status_code, 200)
+        self.assertEqual(
+            advanced_response.json(), {**advanced, "answer_html": "<p>Find shared genes.</p>\n"}
+        )

@@ -26,6 +26,10 @@ Try these questions from the assignment:
 - What is the median value expression of genes involved in breast cancer?
 - What is the median value expression of genes involved in esophageal cancer?
 
+Turn on **Advanced mode** to try an analysis such as “Which genes are shared by
+breast and prostate cancers?” or “What is the highest recorded median expression
+for each cancer?” The result includes the executed SQL.
+
 ## Test on a 16 GB laptop
 
 The assignment sets a maximum of 16 GB of RAM for the whole laptop. To leave
@@ -72,12 +76,18 @@ Compose runs two services. FastAPI serves the static HTML, CSS and JavaScript an
 handles `POST /api/chat`. Ollama is reachable on the internal Compose network.
 The browser accesses only FastAPI. Each submitted question is independent.
 
-The local model interprets the question in one Ollama call and returns a decision
+In simple mode, the local model interprets the question in one Ollama call and returns a decision
 with the operation, scope, cancers, and gene symbols. Python validates the decision
 before using the data tools. Comparisons, rankings, calculations, and lookups for
 multiple cancers receive a message explaining the supported scope. For a valid
 expression query, Python looks up the cancer, retrieves the requested medians, and
 reports any requested genes with missing values.
+
+Advanced mode is experimental. Ollama generates a SQLite query and a short
+description of the analysis. Python executes one read-only query against the
+expression table and returns the rows directly. One additional Ollama call can
+correct a retryable SQL error. The generated SQL can misinterpret the question,
+so the interface displays it alongside the result.
 
 The expression tool takes the cancer as well as the gene list because the same gene
 can have different values across cancers. The app shows the median stored for each
@@ -86,9 +96,9 @@ from the dataset and yields a no-records response.
 
 Local inference simplifies account setup and keeps questions on the machine. It
 requires a model download and CPU latency varies by computer. The small model can
-misinterpret an ambiguous or complex question. This prototype focuses on one cancer
-per question. The frontend uses standard browser APIs for one form and one result
-view, which keeps setup free of a separate frontend build.
+misinterpret an ambiguous or complex question. The frontend uses standard browser
+APIs for one form and one result view, which keeps setup free of a separate
+frontend build.
 
 ## Run the tests
 

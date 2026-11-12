@@ -17,7 +17,16 @@
     </header>
 
     <form id="question-form">
-      <label for="question">Ask a question</label>
+      <div class="form-heading">
+        <label for="question">Ask a question</label>
+        <button id="advanced-toggle" type="button" aria-pressed="false" aria-controls="advanced-warning">
+          Advanced mode
+        </button>
+      </div>
+      <p id="advanced-warning" hidden>
+        <strong>Experimental.</strong> Explore comparisons and calculations across cancers.
+        The model may misinterpret your question. Check the SQL behind the result.
+      </p>
       <div class="composer">
         <input id="question" name="question" required maxlength="1500"
           placeholder="Which genes are associated with lung cancer?">
