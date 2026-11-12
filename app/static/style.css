@@ -87,6 +87,10 @@ button:focus-visible, input:focus-visible, summary:focus-visible {
 
 .examples { flex-wrap: wrap; margin-top: 1rem; }
 
+.advanced-examples, .advanced-mode .simple-examples { display: none; }
+
+.advanced-mode .advanced-examples { display: flex; }
+
 .examples button { font-size: 0.85rem; padding: 0.35rem 0.6rem; }
 
 #status { color: #475c53; min-height: 1.5rem; }

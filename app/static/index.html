@@ -32,7 +32,7 @@
           placeholder="Which genes are associated with lung cancer?">
         <button type="submit">Ask</button>
       </div>
-      <div class="examples" aria-label="Example questions">
+      <div class="examples simple-examples" aria-label="Example questions">
         <button type="button" data-question="How can you help me?">How can you help me?</button>
         <button type="button" data-question="What are the main genes involved in lung cancer?">Lung cancer
           genes</button>
@@ -42,6 +42,20 @@
         <button type="button"
           data-question="What is the median value expression of genes involved in esophageal cancer?">Esophageal cancer
           expression</button>
+      </div>
+      <div class="examples advanced-examples" aria-label="Advanced example questions">
+        <button type="button"
+          data-question="Which genes are recorded in both breast and prostate cancers?">Breast
+          and prostate overlap</button>
+        <button type="button"
+          data-question="Which genes appear in at least three cancers, and in how many cancers does each appear?">Genes
+          in at least 3 cancers</button>
+        <button type="button"
+          data-question="What is the difference in recorded median expression of BRCA2 between prostate and breast cancer?">BRCA2
+          difference by cancer</button>
+        <button type="button"
+          data-question="For each cancer, what percentage of its recorded genes have a median expression strictly above 0.5?">Percent
+          above 0.5 by cancer</button>
       </div>
     </form>
 
