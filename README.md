@@ -74,12 +74,26 @@ mode is marked experimental.
 
 ## Run the tests
 
-With Python 3.14, install the locked dependencies and run the suite.
+Install Python 3.14, then run these commands from the repository root.
+
+**macOS**
 
 ```sh
-python -m pip install -r requirements.txt
-python -m unittest discover -s tests -v
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m unittest discover -s tests -v
 ```
+
+**Windows (PowerShell)**
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+If an existing `.venv` reports `No module named pip`, run its Python executable
+with `-m ensurepip`, then retry the installation.
 
 The tests check that a shared gene retains the value for the selected cancer,
 that unsupported and invalid decisions cannot reach the data tools, and that
